@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>زندگی یک ماجراجو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f0f4f8;
+            direction: rtl;
+            text-align: right;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            display: inline;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        .language-select, .help-btn {
+            margin: 0 10px;
+            padding: 5px;
+        }
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .character {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .stats {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #34495e;
+            display: flex;
+            justify-content: space-around;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .actions button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .actions button:hover {
+            background-color: #2980b9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .start-btn, .pause-btn {
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .start-btn:hover, .pause-btn:hover {
+            background-color: #27ae60;
+        }
+        .clock {
+            font-size: 18px;
+            color: #2c3e50;
+            display: block;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .critical {
+            color: red;
+            font-weight: bold;
+        }
+        .dialog-box {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+        }
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 10px;
+            }
+            .actions {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+            .actions button {
+                margin: 0 5px;
+                padding: 6px 12px;
+            }
+            .stats {
+                flex-direction: column;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .stats p {
+                margin: 2px 0;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .character {
+                margin-top: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 data-lang-key="title">زندگی یک ماجراجو</h1>
+        <select id="language" class="language-select">
+            <option value="fa">فارسی</option>
+            <option value="en">English</option>
+        </select>
+        <button id="help-btn" class="help-btn" data-lang-key="help">راهنما</button>
+    </div>
+    <div class="game-container">
+        <div class="clock" id="clock">00:00</div>
+        <div class="character">
+            <svg width="100" height="100" id="character-svg">
+                <g id="standing">
+                    <circle cx="50" cy="30" r="20" fill="#f1c40f" />
+                    <rect x="40" y="50" width="20" height="40" fill="#3498db" />
+                </g>
+                <g id="sleeping" style="display: none;">
+                    <circle cx="50" cy="70" r="20" fill="#f1c40f" />
+                    <rect x="30" y="70" width="40" height="20" fill="#3498db" />
+                </g>
+            </svg>
+            <div id="dialog-box" class="dialog-box"></div>
+        </div>
+        <div class="stats">
+            <p id="hunger-stat" data-lang-key="hunger">گرسنگی: <span id="hunger">50</span>%</p>
+            <p id="energy-stat" data-lang-key="energy">انرژی: <span id="energy">50</span>%</p>
+            <p id="happiness-stat" data-lang-key="happiness">شادی: <span id="happiness">50</span>%</p>
+            <p id="cleanliness-stat" data-lang-key="cleanliness">نظافت: <span id="cleanliness">50</span>%</p>
+            <p id="money-stat" data-lang-key="money">پول: <span id="money">100</span> سکه</p>
+        </div>
+        <div class="actions" style="display: none;">
+            <button id="feed-btn" data-lang-key="feed" onclick="feed()">غذا خوردن</button>
+            <button id="sleep-btn" data-lang-key="sleep" onclick="sleep()">خواب</button>
+            <button id="work-btn" data-lang-key="work" onclick="work()">کار</button>
+            <button id="clean-btn" data-lang-key="clean" onclick="clean()">نظافت</button>
+            <button id="social-btn" data-lang-key="social" onclick="social()">ملاقات با دوستان</button>
+        </div>
+        <button id="start-btn" class="start-btn" data-lang-key="start" onclick="startGame()">شروع بازی</button>
+        <button id="pause-btn" class="pause-btn" data-lang-key="pause" onclick="pauseGame()" style="display: none;">توقف</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <h2 data-lang-key="help">راهنما</h2>
+            <p id="help-text" data-lang-key="help-text">
+                تو این بازی، تو باید زندگی یه کاراکتر رو مدیریت کنی! ساعت بالای کاراکتر هر 5 ثانیه یه ساعت رو نشون می‌ده و نیازها تغییر می‌کنن.<br>
+                <strong>دکمه‌ها:</strong> از "غذا خوردن"، "خواب"، "کار"، "نظافت" و "دوستان" استفاده کن.<br>
+                <strong>تأثیرات:</strong> کار پول می‌ده، غذا گرسنگی رو کم می‌کنه ولی پول می‌بره، خواب انرژی می‌ده، نظافت شادی رو بالا می‌بره.<br>
+                <strong>خطر:</strong> اگه گرسنگی به 100 برسه، یا انرژی، شادی، نظافت یا پول به 0 برسه و کاری نکنی، کاراکتر می‌میره! رنگ قرمز یعنی خطر نزدیکه.<br>
+                حواست به ساعت باشه و پارامترها رو مدیریت کن!
+            </p>
+            <button onclick="closeModal('help-modal')">بستن</button>
+        </div>
+    </div>
+
+    <script>
+        const lang = {
+            fa: {
+                title: "زندگی یک ماجراجو",
+                help: "راهنما",
+                "help-text": "تو این بازی، تو باید زندگی یه کاراکتر رو مدیریت کنی! ساعت بالای کاراکتر هر 5 ثانیه یه ساعت رو نشون می‌ده و نیازها تغییر می‌کنن.<br><strong>دکمه‌ها:</strong> از \"غذا خوردن\"، \"خواب\"، \"کار\"، \"نظافت\" و \"دوستان\" استفاده کن.<br><strong>تأثیرات:</strong> کار پول می‌ده، غذا گرسنگی رو کم می‌کنه ولی پول می‌بره، خواب انرژی می‌ده، نظافت شادی رو بالا می‌بره.<br><strong>خطر:</strong> اگه گرسنگی به 100 برسه، یا انرژی، شادی، نظافت یا پول به 0 برسه و کاری نکنی، کاراکتر می‌میره! رنگ قرمز یعنی خطر نزدیکه.<br>حواست به ساعت باشه و پارامترها رو مدیریت کن!",
+                feed: "غذا خوردن",
+                sleep: "خواب",
+                work: "کار",
+                clean: "نظافت",
+                social: "ملاقات با دوستان",
+                hunger: "گرسنگی",
+                energy: "انرژی",
+                happiness: "شادی",
+                cleanliness: "نظافت",
+                money: "پول",
+                start: "شروع بازی",
+                pause: "توقف",
+                resume: "ادامه"
+            },
+            en: {
+                title: "Adventurer’s Life",
+                help: "Help",
+                "help-text": "In this game, you manage a character’s life! The clock above the character shows one hour every 5 seconds, and needs change over time.<br><strong>Buttons:</strong> Use \"Eat Food\", \"Sleep\", \"Work\", \"Clean\", and \"Meet Friends\".<br><strong>Effects:</strong> Work gives money, eating reduces hunger but costs money, sleep boosts energy, cleaning increases happiness.<br><strong>Danger:</strong> If hunger hits 100, or energy, happiness, cleanliness, or money drop to 0 and you don’t act, the character dies! Red means danger is near.<br>Watch the clock and manage the parameters!",
+                feed: "Eat Food",
+                sleep: "Sleep",
+                work: "Work",
+                clean: "Clean",
+                social: "Meet Friends",
+                hunger: "Hunger",
+                energy: "Energy",
+                happiness: "Happiness",
+                cleanliness: "Cleanliness",
+                money: "Money",
+                start: "Start Game",
+                pause: "Pause",
+                resume: "Resume"
+            }
+        };
+        let currentLang = "fa";
+        let state = { hunger: 50, energy: 50, happiness: 50, cleanliness: 50, money: 100 };
+        let gameInterval;
+        let time = 0;
+        let paused = false;
+
+        function startGame() {
+            if (paused) {
+                paused = false;
+                document.getElementById('pause-btn').setAttribute('data-lang-key', 'pause');
+            } else {
+                document.querySelector('.actions').style.display = 'flex';
+                document.getElementById('start-btn').style.display = 'none';
+                document.getElementById('pause-btn').style.display = 'inline';
+            }
+            gameInterval = setInterval(() => {
+                if (!paused) {
+                    state.hunger = Math.min(100, state.hunger + 10);
+                    state.energy = Math.max(0, state.energy - 5);
+                    state.happiness = Math.max(0, state.happiness - 2);
+                    state.cleanliness = Math.max(0, state.cleanliness - 3);
+                    time += 1;
+                    updateClock();
+                    checkCritical();
+                    updateUI();
+                    if (state.hunger >= 100 || state.energy <= 0 || state.happiness <= 0 || state.cleanliness <= 0 || state.money < 0) {
+                        alert(currentLang === "fa" ? "زندگیت به آخر خط رسید!" : "Your life has come to an end!");
+                        resetGame();
+                    }
+                }
+            }, 5000); // هر 5 ثانیه
+            updateUI(); // برای اطمینان از به‌روزرسانی دکمه‌ها
+        }
+
+        function pauseGame() {
+            paused = !paused;
+            document.getElementById('pause-btn').setAttribute('data-lang-key', paused ? 'resume' : 'pause');
+            updateUI();
+        }
+
+        function resetGame() {
+            clearInterval(gameInterval);
+            state = { hunger: 50, energy: 50, happiness: 50, cleanliness: 50, money: 100 };
+            time = 0;
+            paused = false;
+            document.querySelector('.actions').style.display = 'none';
+            document.getElementById('start-btn').style.display = 'block';
+            document.getElementById('pause-btn').style.display = 'none';
+            updateUI();
+        }
+
+        function updateClock() {
+            const hours = Math.floor(time / 60);
+            const minutes = time % 60;
+            document.getElementById('clock').textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        function checkCritical() {
+            const stats = ['hunger', 'energy', 'happiness', 'cleanliness', 'money'];
+            const dialogBox = document.getElementById('dialog-box');
+            dialogBox.style.display = 'none';
+            stats.forEach(stat => {
+                const el = document.getElementById(`${stat}-stat`);
+                if ((stat === 'hunger' && state[stat] >= 80) || (stat !== 'hunger' && state[stat] <= 20)) {
+                    el.classList.add('critical');
+                    if (stat === 'hunger') dialogBox.textContent = currentLang === "fa" ? "گرسنه‌ام!" : "I'm hungry!";
+                    else if (stat === 'energy') dialogBox.textContent = currentLang === "fa" ? "خسته‌ام!" : "I'm tired!";
+                    else if (stat === 'happiness') dialogBox.textContent = currentLang === "fa" ? "غمگینم!" : "I'm sad!";
+                    else if (stat === 'cleanliness') dialogBox.textContent = currentLang === "fa" ? "کثیفم!" : "I'm dirty!";
+                    else if (stat === 'money') dialogBox.textContent = currentLang === "fa" ? "پولم کمه!" : "I'm low on money!";
+                    dialogBox.style.display = 'block';
+                } else {
+                    el.classList.remove('critical');
+                }
+            });
+        }
+
+        function updateUI() {
+            document.getElementById("hunger").textContent = state.hunger;
+            document.getElementById("energy").textContent = state.energy;
+            document.getElementById("happiness").textContent = state.happiness;
+            document.getElementById("cleanliness").textContent = state.cleanliness;
+            document.getElementById("money").textContent = state.money;
+            document.querySelectorAll("[data-lang-key]").forEach(el => {
+                const key = el.getAttribute("data-lang-key");
+                if (el.tagName === "P") {
+                    el.innerHTML = `${lang[currentLang][key]}: <span id="${key}">${state[key] || ''}</span>${key === "money" ? " سکه" : "%"}`;
+                } else {
+                    el.textContent = lang[currentLang][key];
+                }
+            });
+            document.body.style.direction = currentLang === "fa" ? "rtl" : "ltr";
+            document.body.style.textAlign = currentLang === "fa" ? "right" : "left";
+        }
+
+        document.getElementById("language").addEventListener("change", (e) => {
+            currentLang = e.target.value;
+            updateUI();
+        });
+
+        document.getElementById("help-btn").addEventListener("click", () => {
+            document.getElementById("help-modal").style.display = "block";
+        });
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        function feed() {
+            if (state.money >= 10) {
+                state.hunger = Math.max(0, state.hunger - 20);
+                state.money -= 10;
+                updateUI();
+            } else {
+                alert(currentLang === "fa" ? "پول کافی نیست!" : "Not enough money!");
+            }
+        }
+
+        function sleep() {
+            state.energy = Math.min(100, state.energy + 30);
+            document.getElementById("standing").style.display = "none";
+            document.getElementById("sleeping").style.display = "block";
+            setTimeout(() => {
+                document.getElementById("standing").style.display = "block";
+                document.getElementById("sleeping").style.display = "none";
+            }, 2000);
+            updateUI();
+        }
+
+        function work() {
+            state.energy = Math.max(0, state.energy - 20);
+            state.money += 50;
+            updateUI();
+        }
+
+        function clean() {
+            state.cleanliness = Math.min(100, state.cleanliness + 20);
+            state.happiness = Math.min(100, state.happiness + 10);
+            updateUI();
+        }
+
+        function social() {
+            state.happiness = Math.min(100, state.happiness + 20);
+            state.energy = Math.max(0, state.energy - 10);
+            updateUI();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
