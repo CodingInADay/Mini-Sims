@@ -8,6 +8,7 @@ Mini Sims (Human life simulation)
 
 نام یک بازی معروف و پرطرفدار است که در آن مدیریت زندگی یک انسان به عهده ی توست. 
 <br><br>
+
 It is the name of a famous and popular game in which you are responsible for managing a person's life.
 <br><br>
 
